@@ -12,7 +12,7 @@ Prompt Compiler is a Chrome/Chromium extension that transforms raw ideas into hi
 
 ### Direct Download
 
-- **[Download dist.zip](./dist.zip)**
+- **[Download dist.zip](https://raw.githubusercontent.com/rushi-gulum/prompt-compiler/main/dist.zip)**
 
 ### Install Steps
 
