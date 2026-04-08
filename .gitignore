@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Release artifacts
+dist-*.zip
+extension.tar
+
+# Coverage reports
+coverage/
+
+# Temporary and debug outputs
+test-*.txt
+test_output.txt
+popup-test.txt
+persona-fail.txt
+
+# Generated inventory/helper files
+file-inventory.txt
+file-inventory-project.txt
+file-not-important-docs.txt
+
+# Non-important archive bundles
+_not_important_bundle/
+archive/non_important/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db

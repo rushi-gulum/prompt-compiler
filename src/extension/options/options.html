@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Prompt Compiler</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <img src="../icons/icon-128.png" alt="Prompt Compiler" class="logo" style="width:32px;height:32px;margin-right:12px;">
+      <h1>Prompt Compiler</h1>
+    </header>
+
+    <form id="settings-form" class="settings-form">
+      <!-- Audience Level -->
+      <div class="field">
+        <label for="audience-level">Default Audience Level</label>
+        <select id="audience-level">
+          <option value="child">Child</option>
+          <option value="general">General</option>
+          <option value="student">Student</option>
+          <option value="professional">Professional</option>
+          <option value="expert">Expert</option>
+        </select>
+      </div>
+
+      <!-- Preferred Domain -->
+      <div class="field">
+        <label for="preferred-domain">Preferred Domain</label>
+        <select id="preferred-domain">
+          <option value="">Auto-detect</option>
+          <option value="software">Software</option>
+          <option value="data_science">Data Science</option>
+          <option value="artificial_intelligence">Artificial Intelligence</option>
+          <option value="cybersecurity">Cybersecurity</option>
+          <option value="creative">Creative</option>
+          <option value="business">Business</option>
+          <option value="finance">Finance</option>
+          <option value="legal">Legal</option>
+          <option value="medical">Medical</option>
+          <option value="education">Education</option>
+          <option value="marketing">Marketing</option>
+          <option value="science">Science</option>
+          <option value="engineering">Engineering</option>
+          <option value="product_management">Product Management</option>
+          <option value="operations">Operations</option>
+          <option value="media_production">Media Production</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+
+      <!-- Theme -->
+      <div class="field">
+        <label for="theme">Theme</label>
+        <select id="theme">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="system">System</option>
+        </select>
+      </div>
+
+      <!-- Compile Timeout -->
+      <div class="field">
+        <label for="compile-timeout">Compile Timeout</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="range" id="compile-timeout" min="2000" max="30000" step="1000" style="flex:1">
+          <span id="timeout-display" style="width:40px;text-align:right">10s</span>
+        </div>
+      </div>
+
+      <!-- Content Script -->
+      <div class="field field-inline">
+        <label for="enable-content-script">Enable Content Script (AI platforms)</label>
+        <input type="checkbox" id="enable-content-script">
+      </div>
+
+      <!-- Context Menu -->
+      <div class="field field-inline">
+        <label for="enable-context-menu">Right-Click Context Menu</label>
+        <input type="checkbox" id="enable-context-menu">
+      </div>
+
+      <!-- Side Panel -->
+      <div class="field field-inline">
+        <label for="enable-side-panel">Enable Side Panel Mode</label>
+        <input type="checkbox" id="enable-side-panel">
+      </div>
+
+      <!-- ── AI Enhancement ── -->
+      <hr>
+      <h2>🤖 AI Enhancement (Groq)</h2>
+
+      <div class="field field-inline">
+        <label for="llm-enabled">Enable LLM-Enhanced Compilation</label>
+        <input type="checkbox" id="llm-enabled">
+      </div>
+
+      <div class="field" id="llm-settings-group">
+        <label for="groq-api-key">Groq API Key</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="password" id="groq-api-key" placeholder="gsk_..." style="flex:1">
+          <button type="button" id="toggle-key-visibility" style="white-space:nowrap">Show</button>
+        </div>
+        <small>Get a free key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a></small>
+      </div>
+
+      <div class="field" id="llm-model-group">
+        <label for="llm-model">Model</label>
+        <select id="llm-model">
+          <option value="llama-3.3-70b-versatile">Llama 3.3 70B (recommended)</option>
+          <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (faster)</option>
+          <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <button type="button" id="test-connection-btn" class="reset-btn" style="background:#2563eb;color:#fff">Test Connection</button>
+        <div id="connection-status" class="status hidden" style="margin-top:8px"></div>
+      </div>
+      <hr>
+
+    </form>
+
+    <!-- Status -->
+    <div id="status" class="status hidden">Settings saved.</div>
+
+    <!-- Reset -->
+    <div class="reset-section" style="display:flex;justify-content:space-between;align-items:center">
+      <button id="export-errors-btn" class="reset-btn" style="background:transparent;border:1px solid #d1d5db;color:#555570">Export Error Log</button>
+      <button id="reset-btn" class="reset-btn">Reset to Defaults</button>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

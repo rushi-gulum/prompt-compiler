@@ -1,0 +1,76 @@
+name: Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and Publish Extension
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate source manifest
+        run: npm run validate:extension-manifest
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test -- --runInBand
+
+      - name: Build extension
+        run: npm run build:ext
+
+      - name: Validate built manifest
+        run: node scripts/validate-extension-manifest.mjs dist/manifest.json
+
+      - name: Verify dist output
+        run: |
+          test -f dist/manifest.json
+          test -f dist/background.js
+          test -f dist/content.js
+          test -f dist/popup/popup.html
+          test -f dist/options/options.html
+          test -f dist/sidepanel/sidepanel.html
+
+      - name: Package extension as dist.zip
+        run: |
+          VERSION="${GITHUB_REF_NAME:-manual}"
+          zip -r "dist-${VERSION}.zip" dist -x "dist/**/*.map"
+          cp "dist-${VERSION}.zip" dist.zip
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-compiler-extension
+          path: |
+            dist.zip
+            dist-*.zip
+          retention-days: 30
+
+      - name: Publish GitHub Release Asset
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist.zip
+            dist-*.zip
+          generate_release_notes: true

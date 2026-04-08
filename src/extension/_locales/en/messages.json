@@ -1,0 +1,82 @@
+{
+  "extensionName": {
+    "message": "Prompt Compiler",
+    "description": "Name of the extension"
+  },
+  "extensionDescription": {
+    "message": "Transform raw ideas into expert-level prompts for any AI platform.",
+    "description": "Extension description shown in the Chrome Web Store"
+  },
+  "compileButton": {
+    "message": "Compile",
+    "description": "Button text for compiling a prompt"
+  },
+  "copyButton": {
+    "message": "Copy",
+    "description": "Button text for copying to clipboard"
+  },
+  "insertButton": {
+    "message": "Insert",
+    "description": "Button text for inserting into AI platform"
+  },
+  "newPromptButton": {
+    "message": "New Prompt",
+    "description": "Button to start a new prompt"
+  },
+  "settingsTitle": {
+    "message": "Settings",
+    "description": "Title for the settings page"
+  },
+  "historyTab": {
+    "message": "History",
+    "description": "Tab label for history view"
+  },
+  "chatTab": {
+    "message": "Chat",
+    "description": "Tab label for chat view"
+  },
+  "searchPlaceholder": {
+    "message": "Search prompts...",
+    "description": "Placeholder text for history search"
+  },
+  "clearAll": {
+    "message": "Clear All",
+    "description": "Button to clear all history"
+  },
+  "exportData": {
+    "message": "Export",
+    "description": "Button to export data"
+  },
+  "inputPlaceholder": {
+    "message": "Describe your idea...",
+    "description": "Placeholder for the main input textarea"
+  },
+  "welcomeText": {
+    "message": "What would you like to create today?",
+    "description": "Welcome message in chat view"
+  },
+  "offlineBadge": {
+    "message": "Offline",
+    "description": "Badge shown when LLM is unavailable"
+  },
+  "errorRateLimit": {
+    "message": "Too many requests. Please wait a moment.",
+    "description": "Error message for rate limiting"
+  },
+  "errorEmpty": {
+    "message": "Please enter your idea before compiling.",
+    "description": "Error when input is empty"
+  },
+  "feedbackQuestion": {
+    "message": "Was this helpful?",
+    "description": "Feedback prompt"
+  },
+  "feedbackThanks": {
+    "message": "Thanks for the feedback!",
+    "description": "Positive feedback acknowledgement"
+  },
+  "contextMenuCompile": {
+    "message": "Compile with Prompt Compiler",
+    "description": "Context menu item text"
+  }
+}

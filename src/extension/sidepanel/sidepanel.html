@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../popup/popup.css">
+  <style>
+    body { width: 100%; height: 100vh; }
+    .chat-messages { min-height: 200px; }
+    .output-content { max-height: 300px; }
+    .compare-view { max-height: 300px; }
+  </style>
+</head>
+<body>
+
+  <!-- ─── Header ─────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-title">
+      <img src="../icons/icon-128.png" alt="Prompt Compiler" class="logo">
+      <h1>Prompt Compiler</h1>
+    </div>
+    <div class="header-actions">
+      <button id="theme-toggle" class="icon-btn" title="Toggle theme">☀</button>
+      <button id="settings-btn" class="icon-btn" title="Settings">⚙</button>
+    </div>
+  </header>
+
+  <!-- ─── View Switcher ──────────────────────────────────── -->
+  <nav class="view-nav">
+    <button class="view-tab active" data-view="chat">Chat</button>
+    <button class="view-tab" data-view="history">History</button>
+  </nav>
+
+  <!-- ── CHAT VIEW ────────────────────────────────────────── -->
+  <section id="view-chat" class="view">
+    <div id="chat-messages" class="chat-messages">
+      <div class="chat-welcome">
+        <p class="welcome-text">What would you like to create today?</p>
+        <div class="shortcut-hints">
+          <span class="shortcut-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Compile</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="error-banner" class="error-banner hidden"></div>
+
+    <div id="input-section" class="input-section">
+      <div class="chat-input-bar">
+        <textarea id="input" placeholder="Describe your idea..." maxlength="5000" rows="3"></textarea>
+        <button id="compile-btn" class="send-btn" title="Compile (Ctrl+Enter)">
+          <span class="btn-icon"><img src="../icons/icon-128.png" alt="Prompt Compiler" style="width:18px;height:18px;filter:brightness(0) invert(1);"></span>
+          <span id="spinner" class="spinner hidden"></span>
+        </button>
+      </div>
+      <div class="input-meta">
+        <span id="char-counter">0 / 5000</span>
+      </div>
+    </div>
+
+    <section id="result-panel" class="result-panel hidden">
+      <div class="quality-ring-container">
+        <svg class="quality-ring" viewBox="0 0 80 80">
+          <circle class="ring-bg" cx="40" cy="40" r="34" />
+          <circle id="ring-fill" class="ring-fill" cx="40" cy="40" r="34" />
+        </svg>
+        <div class="ring-label">
+          <span id="ring-score" class="ring-score">0</span>
+          <span class="ring-max">/24</span>
+        </div>
+        <span id="ring-quality-label" class="ring-quality-label"></span>
+      </div>
+
+      <div class="metadata-bar">
+        <span id="meta-task" class="meta-chip"></span>
+        <span id="meta-domain" class="meta-chip"></span>
+        <span id="meta-complexity" class="meta-chip"></span>
+        <span id="meta-time" class="meta-chip"></span>
+      </div>
+
+      <div id="quality-breakdown" class="quality-breakdown hidden"></div>
+
+      <div id="tab-bar" class="tab-bar">
+        <button class="tab active" data-tab="full">Full</button>
+        <button class="tab" data-tab="role">Role</button>
+        <button class="tab" data-tab="behavioral_rules">Rules</button>
+        <button class="tab" data-tab="context">Context</button>
+        <button class="tab" data-tab="instructions">Task</button>
+        <button class="tab" data-tab="output_format">Format</button>
+        <button class="tab" data-tab="compare">Compare</button>
+      </div>
+
+      <div id="output" class="output-content"></div>
+
+      <div id="compare-view" class="compare-view hidden">
+        <div class="compare-col">
+          <div class="compare-label">Your Input</div>
+          <div id="compare-input" class="compare-content"></div>
+        </div>
+        <div class="compare-divider"></div>
+        <div class="compare-col">
+          <div class="compare-label">Compiled Prompt</div>
+          <div id="compare-output" class="compare-content"></div>
+        </div>
+      </div>
+
+      <div class="actions-bar">
+        <button id="copy-btn" class="action-btn">📋 Copy</button>
+        <button id="insert-btn" class="action-btn">⚡ Insert</button>
+        <button id="export-json-btn" class="action-btn">JSON</button>
+        <button id="export-md-btn" class="action-btn">MD</button>
+      </div>
+      <button id="new-prompt-btn" class="new-prompt-btn">
+        <img src="../icons/icon-128.png" alt="Prompt Compiler" style="width:16px;height:16px;margin-right:8px;filter:brightness(0) invert(1);">
+        New Prompt
+      </button>
+    </section>
+  </section>
+
+  <!-- ── HISTORY VIEW ─────────────────────────────────────── -->
+  <section id="view-history" class="view hidden">
+    <div class="history-toolbar">
+      <input id="history-search" type="text" placeholder="Search prompts..." />
+      <label class="star-filter"><input type="checkbox" id="history-star-filter"> ★ only</label>
+    </div>
+    <div id="history-list" class="history-list">
+      <div class="empty-state">No history yet. Compile your first prompt!</div>
+    </div>
+    <div class="history-footer">
+      <span id="history-count">0 entries</span>
+      <button id="clear-history-btn" class="action-btn danger">Clear All</button>
+    </div>
+  </section>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Reuses popup.ts logic — no onboarding, no sidepanel button -->
+  <script src="sidepanel.js"></script>
+</body>
+</html>
