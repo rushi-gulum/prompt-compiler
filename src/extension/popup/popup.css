@@ -280,14 +280,50 @@ body {
   margin-bottom: 2px;
 }
 
+/* Compilation Level Selector */
+.level-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px 2px;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.level-pill {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.level-pill:hover {
+  background: var(--bg-tertiary, var(--border));
+  color: var(--text-primary);
+}
+
+.level-pill.active {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
 /* Chat input bar */
 .chat-input-bar {
   display: flex;
   align-items: flex-end;
   gap: 6px;
-  padding: 8px 14px 4px;
+  padding: 6px 14px 4px;
   background: var(--bg-primary);
-  border-top: 1px solid var(--border);
+  border-top: none;
   flex-shrink: 0;
 }
 

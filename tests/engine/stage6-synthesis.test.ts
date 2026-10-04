@@ -179,4 +179,53 @@ describe('Stage 6 — Prompt Synthesis', () => {
     expect(result.assembled_prompt.length).toBeGreaterThan(0);
     expect(ALL_PROMPT_SECTIONS.every(s => result.sections[s as PromptSection] !== undefined)).toBe(true);
   });
+
+  describe('Adaptive Compilation Levels', () => {
+    test('compilation_level: light produces lean zero-shot prompt without XML tags', () => {
+      const ctx = makeFullCtx({ compilation_level: 'light' });
+      const result = synthesizePrompt(ctx);
+      expect(result.metadata.effective_level).toBe('light');
+      expect(result.prompt).not.toContain('<role>');
+      expect(result.prompt).not.toContain('<instructions>');
+      expect(result.prompt).not.toContain('<quality_standard>');
+      expect(result.prompt.length).toBeLessThan(400);
+      expect(result.prompt).toContain('Format: Return output in code format.');
+    });
+
+    test('compilation_level: standard produces clean markdown sections without XML tags', () => {
+      const ctx = makeFullCtx({ compilation_level: 'standard' });
+      const result = synthesizePrompt(ctx);
+      expect(result.metadata.effective_level).toBe('standard');
+      expect(result.prompt).not.toContain('<role>');
+      expect(result.prompt).toContain('### Role');
+      expect(result.prompt).toContain('### Task');
+      expect(result.prompt).toContain('### Key Requirements');
+    });
+
+    test('compilation_level: deep produces full 8 XML-delimited sections', () => {
+      const ctx = makeFullCtx({ compilation_level: 'deep' });
+      const result = synthesizePrompt(ctx);
+      expect(result.metadata.effective_level).toBe('deep');
+      expect(result.prompt).toContain('<role>');
+      expect(result.prompt).toContain('<quality_standard>');
+      expect(result.prompt).toContain('<reasoning>');
+    });
+
+    test('compilation_level: auto adapts to simple complexity as light', () => {
+      const ctx = makeFullCtx({
+        compilation_level: 'auto',
+        intent: {
+          intent: 'reverse a string',
+          task_type: 'code_generation',
+          complexity: 'simple',
+          key_entities: ['string'],
+          secondary_types: [],
+          confidence: 0.9,
+        },
+      });
+      const result = synthesizePrompt(ctx);
+      expect(result.metadata.effective_level).toBe('light');
+      expect(result.prompt).not.toContain('<role>');
+    });
+  });
 });

@@ -28,6 +28,7 @@ interface PanelState {
   activeTab: PromptSection | 'full' | 'compare';
   activeView: ViewName;
   historyEntries: HistoryEntry[];
+  compilationLevel: import('../../engine/types.js').CompilationLevel;
 }
 
 const MAX_INPUT = 5000;
@@ -79,6 +80,7 @@ const state: PanelState = {
   activeTab: 'full',
   activeView: 'chat',
   historyEntries: [],
+  compilationLevel: 'auto',
 };
 
 let currentTheme: Theme = 'system';
@@ -88,12 +90,30 @@ async function init(): Promise<void> {
   currentTheme = settings.theme;
   applyTheme(currentTheme);
   updateThemeIcon();
+  state.compilationLevel = settings.defaultCompilationLevel || 'auto';
+  updateLevelPillsUI();
   watchSystemTheme(() => { if (currentTheme === 'system') applyTheme('system'); });
   state.historyEntries = await getHistory();
   attachListeners();
 }
 
+function updateLevelPillsUI(): void {
+  document.querySelectorAll('#level-selector .level-pill').forEach((pill) => {
+    const el = pill as HTMLElement;
+    el.classList.toggle('active', el.dataset.level === state.compilationLevel);
+  });
+}
+
 function attachListeners(): void {
+  document.querySelectorAll('#level-selector .level-pill').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      const level = (pill as HTMLElement).dataset.level as import('../../engine/types.js').CompilationLevel;
+      if (level) {
+        state.compilationLevel = level;
+        updateLevelPillsUI();
+      }
+    });
+  });
   inputArea.addEventListener('input', updateCharCounter);
   compileBtn.addEventListener('click', handleCompile);
   inputArea.addEventListener('keydown', (e) => { if (e.ctrlKey && e.key === 'Enter') handleCompile(); });
@@ -139,7 +159,10 @@ async function handleCompile(): Promise<void> {
   setCompiling(true);
   hideError();
   try {
-    const response: ExtensionResponse = await chrome.runtime.sendMessage({ action: 'compile', payload: { rawIdea } });
+    const response: ExtensionResponse = await chrome.runtime.sendMessage({
+      action: 'compile',
+      payload: { rawIdea, compilationLevel: state.compilationLevel },
+    });
     if (response.success && 'data' in response) {
       const data = (response as CompileSuccessResponse).data;
       state.currentResult = data;
@@ -200,7 +223,8 @@ function renderOutputForTab(data: CompiledPrompt): void {
 function renderMetadata(data: CompiledPrompt): void {
   metaTask.textContent = data.metadata.task_type;
   metaDomain.textContent = data.metadata.domain;
-  metaComplexity.textContent = data.metadata.complexity;
+  const levelText = data.metadata.effective_level ? ` • ${data.metadata.effective_level.toUpperCase()}` : '';
+  metaComplexity.textContent = `${data.metadata.complexity}${levelText}`;
   metaTime.textContent = `${data.metadata.processing_time_ms}ms`;
 }
 

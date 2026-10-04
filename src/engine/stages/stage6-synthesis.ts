@@ -47,10 +47,101 @@ export function synthesizePrompt(ctx: PipelineContext): CompiledPrompt {
     enhanced = true;
   }
 
-  // 4. Assemble full prompt string with XML delimiters
-  const prompt = ALL_PROMPT_SECTIONS
-    .map(s => `<${s}>\n${sections[s]}\n</${s}>`)
-    .join('\n\n');
+  // 4. Determine effective compilation level
+  // If not explicitly set on context, default to 'deep' to preserve full 8-section XML behavior for tests and direct callers
+  const requestedLevel = ctx.compilation_level ?? 'deep';
+  let effectiveLevel: 'light' | 'standard' | 'deep';
+
+  if (requestedLevel === 'auto') {
+    const complexity = ctx.intent?.complexity ?? 'moderate';
+    if (complexity === 'simple') {
+      effectiveLevel = 'light';
+    } else if (complexity === 'complex') {
+      effectiveLevel = 'deep';
+    } else {
+      effectiveLevel = 'standard';
+    }
+  } else {
+    effectiveLevel = requestedLevel;
+  }
+
+  // 5. Assemble prompt string based on effective compilation level and target platform
+  const platform = ctx.target_platform ?? 'generic';
+  let prompt: string;
+
+  if (effectiveLevel === 'light') {
+    // ⚡ Light: Direct, zero-shot prompt with core mission, essential constraints, and output format.
+    const parts: string[] = [];
+    parts.push(sections.mission.trim());
+
+    const constraints = ctx.structure?.negative_constraints?.slice(0, 2) ?? [];
+    if (constraints.length > 0) {
+      parts.push(`Constraints:\n${constraints.map(c => `- ${c}`).join('\n')}`);
+    }
+
+    if (ctx.structure?.output_format) {
+      parts.push(`Format: Return output in ${ctx.structure.output_format} format.`);
+    }
+
+    prompt = parts.filter(Boolean).join('\n\n');
+  } else if (effectiveLevel === 'standard') {
+    // 🎯 Standard: Focused, high-impact prompt with role title, mission, instructions, and format.
+    const parts: string[] = [];
+    if (ctx.persona?.role_title) {
+      parts.push(`### Role\nYou are a ${ctx.persona.role_title}.`);
+    }
+    parts.push(`### Task\n${sections.mission.trim()}`);
+    parts.push(sections.instructions.trim());
+
+    const keyConstraints = [
+      ...(ctx.structure?.positive_constraints?.slice(0, 2) ?? []),
+      ...(ctx.structure?.negative_constraints?.slice(0, 2) ?? []),
+    ];
+    if (keyConstraints.length > 0) {
+      parts.push(`### Key Requirements\n${keyConstraints.map(c => `- ${c}`).join('\n')}`);
+    }
+
+    parts.push(sections.output_format.trim());
+    prompt = parts.filter(Boolean).join('\n\n');
+  } else {
+    // 🛡️ Deep: Platform-optimized structure
+    if (platform === 'chatgpt') {
+      // ChatGPT / GPT-4o operates best with Markdown headers and bulleted rules (avoids XML tags)
+      prompt = [
+        `# Role & Persona\n${sections.role}`,
+        `# Objective\n${sections.mission}`,
+        `# Operational Rules & Boundaries\n${sections.behavioral_rules}`,
+        `# Context\n${sections.context}`,
+        `# Reasoning Approach\n${sections.reasoning}`,
+        sections.instructions,
+        sections.output_format,
+        sections.quality_standard,
+      ].join('\n\n');
+    } else if (platform === 'gemini') {
+      // Gemini benefits from natural sectioning and clear directives
+      prompt = [
+        `## Role\n${sections.role}`,
+        `## Task\n${sections.mission}`,
+        `## Core Guidelines\n${sections.behavioral_rules}`,
+        `## Detailed Instructions\n${sections.instructions}`,
+        sections.output_format,
+        sections.quality_standard,
+      ].join('\n\n');
+    } else if (platform === 'perplexity' || platform === 'grok') {
+      // Perplexity & Grok prefer direct, concise instructions with clear formatting boundaries
+      prompt = [
+        `You are a ${ctx.persona?.role_title ?? 'Domain Specialist'}.\n${sections.mission}`,
+        `### Rules\n${sections.behavioral_rules}`,
+        sections.instructions,
+        sections.output_format,
+      ].join('\n\n');
+    } else {
+      // Claude & Generic: Comprehensive 8 XML-delimited sections (Claude has native affinity for XML tags)
+      prompt = ALL_PROMPT_SECTIONS
+        .map(s => `<${s}>\n${sections[s]}\n</${s}>`)
+        .join('\n\n');
+    }
+  }
 
   return {
     prompt,
@@ -63,6 +154,9 @@ export function synthesizePrompt(ctx: PipelineContext): CompiledPrompt {
       task_type: ctx.intent!.task_type,
       domain: ctx.domain!.primary_domain,
       complexity: ctx.intent!.complexity,
+      compilation_level: requestedLevel,
+      effective_level: effectiveLevel,
+      target_platform: platform,
       processing_time_ms: Date.now() - startTime,
       warnings,
       enhanced,

@@ -2,6 +2,7 @@ import type { UserSettings, HistoryEntry, FeedbackEntry } from './messages.js';
 
 export const DEFAULT_SETTINGS: UserSettings = {
   defaultAudienceLevel: 'professional',
+  defaultCompilationLevel: 'auto',
   preferredDomain: null,
   theme: 'system',
   enableContentScript: true,

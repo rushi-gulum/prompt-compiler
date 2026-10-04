@@ -14,6 +14,12 @@ function setupDOM(): void {
       <div class="chat-welcome"><p class="welcome-text">What would you like to create today?</p></div>
     </div>
     <div id="input-section">
+      <div id="level-selector">
+        <button class="level-pill active" data-level="auto">Auto</button>
+        <button class="level-pill" data-level="light">Light</button>
+        <button class="level-pill" data-level="standard">Standard</button>
+        <button class="level-pill" data-level="deep">Deep</button>
+      </div>
       <textarea id="input" maxlength="5000"></textarea>
       <button id="compile-btn"><span class="btn-icon">✦</span><span class="btn-text">Compile</span><span id="spinner" class="hidden"></span></button>
     </div>
@@ -195,5 +201,10 @@ describe('Popup Module', () => {
     const toastEl = document.getElementById('toast')!;
     expect(toastEl.textContent).toBe('Copied!');
     expect(toastEl.classList.contains('visible')).toBe(true);
+  });
+
+  test('state tracks compilationLevel', () => {
+    expect(popup.state).toHaveProperty('compilationLevel');
+    expect(['auto', 'light', 'standard', 'deep']).toContain(popup.state.compilationLevel);
   });
 });

@@ -160,4 +160,36 @@ describe('Public API — compile()', () => {
     const result = await compile('Write a function that handles $, €, and ¥ currency symbols');
     expect(result.success).toBe(true);
   });
+
+  // === Compilation Levels ===
+
+  test('compile with level: light produces lean zero-shot prompt', async () => {
+    const result = await compile('translate this word to french', undefined, { level: 'light' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.metadata.effective_level).toBe('light');
+      expect(result.data.assembled_prompt).not.toContain('<role>');
+      expect(result.data.assembled_prompt.length).toBeLessThan(300);
+    }
+  });
+
+  test('compile with level: standard produces clean markdown prompt', async () => {
+    const result = await compile('build a python rest api', undefined, { level: 'standard' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.metadata.effective_level).toBe('standard');
+      expect(result.data.assembled_prompt).not.toContain('<role>');
+      expect(result.data.assembled_prompt).toContain('### Role');
+    }
+  });
+
+  test('compile with level: deep produces full 8 XML sections', async () => {
+    const result = await compile('design a high-performance database schema', undefined, { level: 'deep' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.metadata.effective_level).toBe('deep');
+      expect(result.data.assembled_prompt).toContain('<role>');
+      expect(result.data.assembled_prompt).toContain('<quality_standard>');
+    }
+  });
 });

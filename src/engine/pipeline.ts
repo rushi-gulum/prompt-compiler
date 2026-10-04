@@ -8,6 +8,10 @@ import { structureInstructions } from './stages/stage5-structure.js';
 import { synthesizePrompt } from './stages/stage6-synthesis.js';
 
 export interface PipelineOptions {
+  /** Desired compilation level ('auto' | 'light' | 'standard' | 'deep') */
+  compilation_level?: import('./types.js').CompilationLevel;
+  /** Target LLM platform for formatting customization */
+  target_platform?: import('./types.js').TargetPlatform;
   /** Pre-computed intent (from hybrid orchestrator) — skips Stage 1 */
   intent?: IntentResult;
   /** Pre-computed domain (from hybrid orchestrator) — skips Stage 2 */
@@ -18,7 +22,11 @@ export interface PipelineOptions {
 
 /** Run all 6 pipeline stages in sequence, accumulating context */
 export async function runPipeline(input: string, options?: PipelineOptions): Promise<PipelineContext> {
-  const ctx: PipelineContext = { raw_input: input };
+  const ctx: PipelineContext = {
+    raw_input: input,
+    compilation_level: options?.compilation_level,
+    target_platform: options?.target_platform,
+  };
 
   // Use pre-computed results from hybrid orchestrator, or run stages normally
   ctx.intent = options?.intent ?? await runStage(1, () => extractIntent(input), ctx);

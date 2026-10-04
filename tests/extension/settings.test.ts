@@ -12,6 +12,7 @@ beforeEach(() => {
 describe('Settings Module', () => {
   test('DEFAULT_SETTINGS has all required fields', () => {
     expect(DEFAULT_SETTINGS.defaultAudienceLevel).toBe('professional');
+    expect(DEFAULT_SETTINGS.defaultCompilationLevel).toBe('auto');
     expect(DEFAULT_SETTINGS.preferredDomain).toBeNull();
     expect(DEFAULT_SETTINGS.theme).toBe('system');
     expect(DEFAULT_SETTINGS.enableContentScript).toBe(true);

@@ -218,6 +218,16 @@ export type DepthLevel = 'none' | 'standard' | 'deep';
 export type ThinkingBudget = 'minimal' | 'light' | 'standard' | 'deep' | 'maximum';
 export type QualityLabel = 'poor' | 'acceptable' | 'good' | 'excellent';
 
+/** Target LLM platform for model-specific prompt optimization */
+export type TargetPlatform = 'generic' | 'chatgpt' | 'claude' | 'gemini' | 'perplexity' | 'grok';
+
+export const ALL_TARGET_PLATFORMS: readonly TargetPlatform[] = [
+  'generic', 'chatgpt', 'claude', 'gemini', 'perplexity', 'grok',
+] as const;
+
+/** User-facing or adaptive compilation level */
+export type CompilationLevel = 'auto' | 'light' | 'standard' | 'deep';
+
 // ─── Stage Result Interfaces ─────────────────────────────────────────────────
 
 export interface IntentResult {
@@ -284,6 +294,8 @@ export interface LLMIntentResult {
 
 export interface PipelineContext {
   raw_input: string;
+  compilation_level?: CompilationLevel;
+  target_platform?: TargetPlatform;
   intent?: IntentResult;
   domain?: DomainResult;
   persona?: PersonaResult;
@@ -306,6 +318,9 @@ export interface CompiledPrompt {
     task_type: TaskType;
     domain: DomainType;
     complexity: Complexity;
+    compilation_level?: CompilationLevel;
+    effective_level?: 'light' | 'standard' | 'deep';
+    target_platform?: TargetPlatform;
     processing_time_ms: number;
     warnings: string[];
     enhanced: boolean;

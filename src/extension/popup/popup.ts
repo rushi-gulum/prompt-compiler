@@ -30,6 +30,7 @@ interface PopupState {
   activeView: ViewName;
   historyEntries: HistoryEntry[];
   onboardingComplete: boolean;
+  compilationLevel: import('../../engine/types.js').CompilationLevel;
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────
@@ -107,6 +108,7 @@ const state: PopupState = {
   activeView: 'chat',
   historyEntries: [],
   onboardingComplete: true,
+  compilationLevel: 'auto',
 };
 
 let currentTheme: Theme = 'system';
@@ -121,6 +123,9 @@ async function init(): Promise<void> {
   currentTheme = settings.theme;
   applyTheme(currentTheme);
   updateThemeIcon();
+
+  state.compilationLevel = settings.defaultCompilationLevel || 'auto';
+  updateLevelPillsUI();
 
   state.onboardingComplete = settings.onboardingComplete;
   if (!state.onboardingComplete) {
@@ -140,10 +145,28 @@ async function init(): Promise<void> {
   checkUpdateBanner();
 }
 
+function updateLevelPillsUI(): void {
+  document.querySelectorAll('#level-selector .level-pill').forEach((pill) => {
+    const el = pill as HTMLElement;
+    el.classList.toggle('active', el.dataset.level === state.compilationLevel);
+  });
+}
+
 /**
  * Attaches all necessary event listeners to the DOM elements.
  */
 function attachListeners(): void {
+  // Level selector pills
+  document.querySelectorAll('#level-selector .level-pill').forEach((pill) => {
+    pill.addEventListener('click', () => {
+      const level = (pill as HTMLElement).dataset.level as import('../../engine/types.js').CompilationLevel;
+      if (level) {
+        state.compilationLevel = level;
+        updateLevelPillsUI();
+      }
+    });
+  });
+
   // Chat
   inputArea.addEventListener('input', updateCharCounter);
   compileBtn.addEventListener('click', handleCompile);
@@ -267,6 +290,22 @@ function updateCharCounter(): void {
   }
 }
 
+async function detectActiveTabPlatform(): Promise<import('../../engine/types.js').TargetPlatform> {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.url) return 'generic';
+    const url = tab.url.toLowerCase();
+    if (url.includes('chatgpt.com') || url.includes('chat.openai.com')) return 'chatgpt';
+    if (url.includes('claude.ai')) return 'claude';
+    if (url.includes('gemini.google.com')) return 'gemini';
+    if (url.includes('perplexity.ai')) return 'perplexity';
+    if (url.includes('grok.com')) return 'grok';
+    return 'generic';
+  } catch {
+    return 'generic';
+  }
+}
+
 // ─── Compile ────────────────────────────────────────────────────────────
 async function handleCompile(): Promise<void> {
   const rawIdea = inputArea.value.trim();
@@ -280,9 +319,14 @@ async function handleCompile(): Promise<void> {
   hideError();
 
   try {
+    const targetPlatform = await detectActiveTabPlatform();
     const response: ExtensionResponse = await chrome.runtime.sendMessage({
       action: 'compile',
-      payload: { rawIdea },
+      payload: {
+        rawIdea,
+        compilationLevel: state.compilationLevel,
+        targetPlatform,
+      },
     });
 
     if (response.success && 'data' in response) {
@@ -362,7 +406,8 @@ function renderOutputForTab(data: CompiledPrompt): void {
 function renderMetadata(data: CompiledPrompt): void {
   metaTask.textContent = data.metadata.task_type;
   metaDomain.textContent = data.metadata.domain;
-  metaComplexity.textContent = data.metadata.complexity;
+  const levelText = data.metadata.effective_level ? ` • ${data.metadata.effective_level.toUpperCase()}` : '';
+  metaComplexity.textContent = `${data.metadata.complexity}${levelText}`;
   metaTime.textContent = `${data.metadata.processing_time_ms}ms`;
 }
 

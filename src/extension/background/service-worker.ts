@@ -83,7 +83,7 @@ chrome.runtime.onMessage.addListener(
 async function handleMessage(req: ExtensionRequest): Promise<ExtensionResponse> {
   switch (req.action) {
     case 'compile':
-      return handleCompile(req.payload.rawIdea);
+      return handleCompile(req.payload.rawIdea, req.payload.compilationLevel, req.payload.targetPlatform);
 
     case 'get_settings':
       return { success: true, settings: await getSettings() };
@@ -167,7 +167,11 @@ async function handleMessage(req: ExtensionRequest): Promise<ExtensionResponse> 
   }
 }
 
-async function handleCompile(rawIdea: string): Promise<ExtensionResponse> {
+async function handleCompile(
+  rawIdea: string,
+  requestedLevel?: import('../../engine/types.js').CompilationLevel,
+  targetPlatform?: import('../../engine/types.js').TargetPlatform,
+): Promise<ExtensionResponse> {
   // Rate limit check
   if (!(await canCompile())) {
     const resetMs = await getResetTimeMs();
@@ -194,9 +198,10 @@ async function handleCompile(rawIdea: string): Promise<ExtensionResponse> {
     };
 
     timeoutMs = settings.compileTimeoutMs || 10000;
+    const level = requestedLevel || settings.defaultCompilationLevel || 'auto';
 
     const result = await Promise.race([
-      compile(rawIdea, llmConfig),
+      compile(rawIdea, llmConfig, { level, targetPlatform }),
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error('STAGE_TIMEOUT')), timeoutMs);
       }),

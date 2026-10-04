@@ -1,4 +1,4 @@
-import type { CompiledPrompt, CompilationError, AudienceLevel, DomainType } from '../../engine/types.js';
+import type { CompiledPrompt, CompilationError, AudienceLevel, DomainType, CompilationLevel, TargetPlatform } from '../../engine/types.js';
 
 // ─── Action Types ─────────────────────────────────────────────────────────────
 
@@ -17,7 +17,7 @@ export type MessageAction =
   | 'submit_feedback'
   | 'log_error';
 
-// ─── History Types ────────────────────────────────────────────────────────────
+// ─── History Types ────────────────────────────────────────────────────
 
 export interface HistoryEntry {
   id: string;
@@ -39,7 +39,11 @@ export interface FeedbackEntry {
 
 export interface CompileRequest {
   action: 'compile';
-  payload: { rawIdea: string };
+  payload: {
+    rawIdea: string;
+    compilationLevel?: CompilationLevel;
+    targetPlatform?: TargetPlatform;
+  };
 }
 
 export interface GetSettingsRequest {
@@ -163,6 +167,7 @@ export type ExtensionResponse =
 
 export interface UserSettings {
   defaultAudienceLevel: AudienceLevel;
+  defaultCompilationLevel?: CompilationLevel;
   preferredDomain: DomainType | null;
   theme: 'light' | 'dark' | 'system';
   enableContentScript: boolean;

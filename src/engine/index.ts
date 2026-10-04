@@ -7,9 +7,18 @@ import { classifyComplexity } from './scoring/complexity-classifier.js';
 import { evaluateOutput } from './llm/llm-evaluator.js';
 import { refineOutput } from './llm/llm-refiner.js';
 
+export interface CompileOptions {
+  level?: import('./types.js').CompilationLevel;
+  targetPlatform?: import('./types.js').TargetPlatform;
+}
+
 /** Public API: compile a raw idea string into an expert-level prompt.
  *  When llmConfig is provided and enabled, runs hybrid LLM + rule-based analysis. */
-export async function compile(rawIdea: string, llmConfig?: LLMConfig): Promise<CompilationResult> {
+export async function compile(
+  rawIdea: string,
+  llmConfig?: LLMConfig,
+  options?: CompileOptions,
+): Promise<CompilationResult> {
   // 1. Type check + empty check
   if (!rawIdea || typeof rawIdea !== 'string' || rawIdea.trim().length === 0) {
     return {
@@ -35,16 +44,26 @@ export async function compile(rawIdea: string, llmConfig?: LLMConfig): Promise<C
   // 5. Run pipeline (hybrid or rule-based)
   const start = Date.now();
   const isHybrid = !!(llmConfig && llmConfig.enabled && llmConfig.apiKey);
+  const compilationLevel = options?.level ?? 'auto';
+  const targetPlatform = options?.targetPlatform ?? 'generic';
 
   try {
     let ctx;
     const inputComplexity = classifyComplexity(text);
-    const takeDeepPath = isHybrid && (inputComplexity === 'moderate' || inputComplexity === 'complex');
+    // If user explicitly asks for 'light', skip deep LLM path to keep latency ultra-low
+    const forceFast = compilationLevel === 'light';
+    const takeDeepPath = !forceFast && isHybrid && (inputComplexity === 'moderate' || inputComplexity === 'complex' || compilationLevel === 'deep');
 
     if (takeDeepPath) {
       // Deep Path: run LLM + rule-based Stage 1+2 in parallel, then pipeline
       const { intent, domain, llmIntent } = await hybridAnalyze(text, llmConfig);
-      ctx = await runPipeline(text, { intent, domain, llmIntent });
+      ctx = await runPipeline(text, {
+        compilation_level: compilationLevel,
+        target_platform: targetPlatform,
+        intent,
+        domain,
+        llmIntent,
+      });
       enrichContext(ctx, llmIntent);
       
       // Outcome Optimizer: Evaluation and Refinement Loop
@@ -75,7 +94,10 @@ export async function compile(rawIdea: string, llmConfig?: LLMConfig): Promise<C
       }
     } else {
       // Fast Path: Pure rule-based flow (skips LLM overhead)
-      ctx = await runPipeline(text);
+      ctx = await runPipeline(text, {
+        compilation_level: compilationLevel,
+        target_platform: targetPlatform,
+      });
     }
 
     const result = ctx.result!;
@@ -99,6 +121,8 @@ export type {
   CompilationResult,
   CompiledPrompt,
   CompilationError,
+  CompilationLevel,
+  TargetPlatform,
   TaskType,
   DomainType,
   OutputFormat,

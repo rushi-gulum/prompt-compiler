@@ -104,4 +104,17 @@ describe('Service Worker', () => {
       expect(typeof data.quality_label).toBe('string');
     }
   });
+
+  test('handleMessage respects compilationLevel: light in payload', async () => {
+    const response = await handleMessage({
+      action: 'compile',
+      payload: { rawIdea: 'Fix typo in paragraph', compilationLevel: 'light' },
+    });
+    expect(response.success).toBe(true);
+    if (response.success && 'data' in response) {
+      const data = response.data as any;
+      expect(data.metadata.effective_level).toBe('light');
+      expect(data.assembled_prompt).not.toContain('<role>');
+    }
+  });
 });

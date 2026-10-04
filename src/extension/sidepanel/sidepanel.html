@@ -44,6 +44,14 @@
     <div id="error-banner" class="error-banner hidden"></div>
 
     <div id="input-section" class="input-section">
+      <!-- Compilation Level Selector -->
+      <div id="level-selector" class="level-selector" title="Select Prompt Depth">
+        <button type="button" class="level-pill active" data-level="auto" title="Auto: Adapts to prompt complexity (Light for simple, Deep for complex)">🤖 Auto</button>
+        <button type="button" class="level-pill" data-level="light" title="Light: Direct zero-shot prompt (~40 words)">⚡ Light</button>
+        <button type="button" class="level-pill" data-level="standard" title="Standard: Structured role, task & rules (~180 words)">🎯 Standard</button>
+        <button type="button" class="level-pill" data-level="deep" title="Deep: Full 8-section expert prompt with reasoning">🛡️ Deep</button>
+      </div>
+
       <div class="chat-input-bar">
         <textarea id="input" placeholder="Describe your idea..." maxlength="5000" rows="3"></textarea>
         <button id="compile-btn" class="send-btn" title="Compile (Ctrl+Enter)">

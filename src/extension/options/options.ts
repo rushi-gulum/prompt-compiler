@@ -5,6 +5,7 @@ import type { AudienceLevel, DomainType } from '../../engine/types.js';
 
 // ─── DOM References ─────────────────────────────────────────────────────
 const audienceSelect = document.getElementById('audience-level') as HTMLSelectElement;
+const compilationLevelSelect = document.getElementById('compilation-level') as HTMLSelectElement;
 const domainSelect = document.getElementById('preferred-domain') as HTMLSelectElement;
 const themeSelect = document.getElementById('theme') as HTMLSelectElement;
 const contentScriptCheckbox = document.getElementById('enable-content-script') as HTMLInputElement;
@@ -34,6 +35,9 @@ async function init(): Promise<void> {
 
 function populateForm(settings: UserSettings): void {
   audienceSelect.value = settings.defaultAudienceLevel;
+  if (compilationLevelSelect) {
+    compilationLevelSelect.value = settings.defaultCompilationLevel || 'auto';
+  }
   domainSelect.value = settings.preferredDomain ?? '';
   themeSelect.value = settings.theme;
   contentScriptCheckbox.checked = settings.enableContentScript;
@@ -53,6 +57,12 @@ function attachListeners(): void {
   audienceSelect.addEventListener('change', () => {
     save({ defaultAudienceLevel: audienceSelect.value as AudienceLevel });
   });
+
+  if (compilationLevelSelect) {
+    compilationLevelSelect.addEventListener('change', () => {
+      save({ defaultCompilationLevel: compilationLevelSelect.value as import('../../engine/types.js').CompilationLevel });
+    });
+  }
 
   domainSelect.addEventListener('change', () => {
     const val = domainSelect.value;
