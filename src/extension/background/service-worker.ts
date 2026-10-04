@@ -198,7 +198,7 @@ async function handleCompile(
     };
 
     timeoutMs = settings.compileTimeoutMs || 10000;
-    const level = requestedLevel || settings.defaultCompilationLevel || 'auto';
+    const level = requestedLevel || settings.defaultCompilationLevel || 'deep';
 
     const result = await Promise.race([
       compile(rawIdea, llmConfig, { level, targetPlatform }),

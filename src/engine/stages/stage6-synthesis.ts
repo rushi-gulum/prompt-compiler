@@ -74,7 +74,7 @@ export function synthesizePrompt(ctx: PipelineContext): CompiledPrompt {
     const parts: string[] = [];
     parts.push(sections.mission.trim());
 
-    const constraints = ctx.structure?.negative_constraints?.slice(0, 2) ?? [];
+    const constraints = ctx.structure?.negative_constraints?.slice(0, 1) ?? [];
     if (constraints.length > 0) {
       parts.push(`Constraints:\n${constraints.map(c => `- ${c}`).join('\n')}`);
     }

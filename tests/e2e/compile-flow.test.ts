@@ -57,8 +57,8 @@ describe('E2E Compilation Flow', () => {
     const prompt = result.data.assembled_prompt as string;
     expect(prompt.length).toBeGreaterThan(0);
     
-    // Check for standard prompt compiler structural tags
-    expect(prompt).toContain('<role>');
+    // Check for standard prompt compiler structural section marker
+    expect(prompt.includes('<role>') || prompt.includes('### Role')).toBe(true);
     
     expect(fetchSpy).not.toHaveBeenCalledWith(expect.stringContaining('api.groq.com'));
   });

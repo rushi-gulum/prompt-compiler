@@ -44,7 +44,7 @@ export async function compile(
   // 5. Run pipeline (hybrid or rule-based)
   const start = Date.now();
   const isHybrid = !!(llmConfig && llmConfig.enabled && llmConfig.apiKey);
-  const compilationLevel = options?.level ?? 'auto';
+  const compilationLevel = options?.level ?? 'deep';
   const targetPlatform = options?.targetPlatform ?? 'generic';
 
   try {
