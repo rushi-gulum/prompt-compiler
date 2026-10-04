@@ -12,6 +12,8 @@ export interface PipelineOptions {
   compilation_level?: import('./types.js').CompilationLevel;
   /** Target LLM platform for formatting customization */
   target_platform?: import('./types.js').TargetPlatform;
+  /** Optional previous turn conversation history */
+  multi_turn?: import('./types.js').MultiTurnContext;
   /** Pre-computed intent (from hybrid orchestrator) — skips Stage 1 */
   intent?: IntentResult;
   /** Pre-computed domain (from hybrid orchestrator) — skips Stage 2 */
@@ -26,6 +28,7 @@ export async function runPipeline(input: string, options?: PipelineOptions): Pro
     raw_input: input,
     compilation_level: options?.compilation_level,
     target_platform: options?.target_platform,
+    multi_turn: options?.multi_turn,
   };
 
   // Use pre-computed results from hybrid orchestrator, or run stages normally

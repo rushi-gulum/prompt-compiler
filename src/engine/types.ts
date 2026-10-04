@@ -273,11 +273,21 @@ export interface StructureResult {
 
 // ─── LLM Types ───────────────────────────────────────────────────────────────
 
+export type LLMProvider = 'groq' | 'gemini' | 'openai';
+
 export interface LLMConfig {
   apiKey: string;
-  model?: string;          // default: 'llama-3.3-70b-versatile'
+  provider?: LLMProvider;  // default: 'groq'
+  model?: string;          // default depends on provider
   timeoutMs?: number;      // default: 4000
   enabled: boolean;
+}
+
+export interface MultiTurnContext {
+  previousTurn?: {
+    input: string;
+    output: string;
+  };
 }
 
 export interface LLMIntentResult {
@@ -296,6 +306,7 @@ export interface PipelineContext {
   raw_input: string;
   compilation_level?: CompilationLevel;
   target_platform?: TargetPlatform;
+  multi_turn?: MultiTurnContext;
   intent?: IntentResult;
   domain?: DomainResult;
   persona?: PersonaResult;
@@ -321,10 +332,12 @@ export interface CompiledPrompt {
     compilation_level?: CompilationLevel;
     effective_level?: 'light' | 'standard' | 'deep';
     target_platform?: TargetPlatform;
+    estimated_tokens?: number;
     processing_time_ms: number;
     warnings: string[];
     enhanced: boolean;
     hybrid_mode: boolean;
+    multi_turn?: boolean;
     llm_confidence?: number;
   };
 }

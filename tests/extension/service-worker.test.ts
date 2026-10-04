@@ -117,4 +117,43 @@ describe('Service Worker', () => {
       expect(data.assembled_prompt).not.toContain('<role>');
     }
   });
+
+  test('handleMessage respects targetPlatform: chatgpt in payload', async () => {
+    const response = await handleMessage({
+      action: 'compile',
+      payload: {
+        rawIdea: 'Optimize SQL index for large postgres table',
+        compilationLevel: 'deep',
+        targetPlatform: 'chatgpt',
+      },
+    });
+    expect(response.success).toBe(true);
+    if (response.success && 'data' in response) {
+      const data = response.data as any;
+      expect(data.metadata.target_platform).toBe('chatgpt');
+      expect(data.assembled_prompt).toContain('# Role & Persona');
+      expect(data.assembled_prompt).not.toContain('<role>');
+    }
+  });
+
+  test('handleMessage respects multiTurn in payload', async () => {
+    const response = await handleMessage({
+      action: 'compile',
+      payload: {
+        rawIdea: 'add rate limiting to the route',
+        multiTurn: {
+          previousTurn: {
+            input: 'build express route',
+            output: 'const express = require("express");',
+          },
+        },
+      },
+    });
+    expect(response.success).toBe(true);
+    if (response.success && 'data' in response) {
+      const data = response.data as any;
+      expect(data.metadata.multi_turn).toBe(true);
+      expect(data.sections.context).toContain('build express route');
+    }
+  });
 });

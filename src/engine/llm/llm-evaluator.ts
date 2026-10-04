@@ -1,5 +1,5 @@
 import type { LLMConfig } from '../types.js';
-import { callGroq, buildClientOptions, type GroqMessage } from './groq-client.js';
+import { callUnifiedLLM, buildUnifiedClientOptions, type UnifiedMessage } from './unified-client.js';
 
 export interface EvaluationResult {
   score: number; // 0-100
@@ -29,15 +29,15 @@ export async function evaluateOutput(
     return { score: 100, critiques: [], passed: true }; // Fallback
   }
 
-  const options = buildClientOptions(config);
-  const messages: GroqMessage[] = [
+  const options = buildUnifiedClientOptions(config);
+  const messages: UnifiedMessage[] = [
     { role: 'system', content: EVALUATOR_PROMPT },
     { role: 'user', content: `Original User Intent: ${userIntent}\n\nGenerated Prompt to Evaluate:\n${generatedPrompt}` }
   ];
 
   try {
-    const response = await callGroq(messages, options, true);
-    const content = response.choices?.[0]?.message?.content;
+    const response = await callUnifiedLLM(messages, options, true);
+    const content = response.content;
     if (!content) throw new Error('Empty LLM evaluation response');
 
     const parsed = JSON.parse(content);

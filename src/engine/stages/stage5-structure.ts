@@ -4,7 +4,7 @@ import { instructionTemplates, domainConstraints, taskOutputFormats } from '../d
 /** Task types that benefit from examples in the output */
 const examplesWhitelist: Set<TaskType> = new Set([
   'code_generation', 'creative_writing', 'extraction', 'classification',
-  'structured_generation',
+  'structured_generation', 'debugging', 'sql_generation',
 ]);
 
 /** Stage 5: Structure instructions, constraints, format, and audience */

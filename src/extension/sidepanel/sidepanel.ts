@@ -95,6 +95,7 @@ async function init(): Promise<void> {
   watchSystemTheme(() => { if (currentTheme === 'system') applyTheme('system'); });
   state.historyEntries = await getHistory();
   attachListeners();
+  void updateInsertButtonLabel();
 }
 
 function updateLevelPillsUI(): void {
@@ -152,6 +153,37 @@ function updateCharCounter(): void {
   charCounter.className = len >= MAX_INPUT ? 'error' : len >= WARN_THRESHOLD ? 'warning' : '';
 }
 
+async function detectActiveTabPlatform(): Promise<import('../../engine/types.js').TargetPlatform> {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.url) return 'generic';
+    const url = tab.url.toLowerCase();
+    if (url.includes('chatgpt.com') || url.includes('chat.openai.com')) return 'chatgpt';
+    if (url.includes('claude.ai')) return 'claude';
+    if (url.includes('gemini.google.com')) return 'gemini';
+    if (url.includes('perplexity.ai')) return 'perplexity';
+    if (url.includes('grok.com')) return 'grok';
+    return 'generic';
+  } catch {
+    return 'generic';
+  }
+}
+
+async function updateInsertButtonLabel(): Promise<void> {
+  const platform = await detectActiveTabPlatform();
+  const labels: Record<string, string> = {
+    chatgpt: '⚡ Insert into ChatGPT',
+    claude: '⚡ Insert into Claude',
+    gemini: '⚡ Insert into Gemini',
+    perplexity: '⚡ Insert into Perplexity',
+    grok: '⚡ Insert into Grok',
+    generic: '⚡ Insert into Page',
+  };
+  if (insertBtn) {
+    insertBtn.textContent = labels[platform] || '⚡ Insert into Page';
+  }
+}
+
 async function handleCompile(): Promise<void> {
   const rawIdea = inputArea.value.trim();
   if (!rawIdea) { showError('Please enter your idea.'); return; }
@@ -159,9 +191,22 @@ async function handleCompile(): Promise<void> {
   setCompiling(true);
   hideError();
   try {
+    const targetPlatform = await detectActiveTabPlatform();
+    const multiTurn = state.currentResult && state.lastInput ? {
+      previousTurn: {
+        input: state.lastInput,
+        output: state.currentResult.assembled_prompt,
+      },
+    } : undefined;
+
     const response: ExtensionResponse = await chrome.runtime.sendMessage({
       action: 'compile',
-      payload: { rawIdea, compilationLevel: state.compilationLevel },
+      payload: {
+        rawIdea,
+        compilationLevel: state.compilationLevel,
+        targetPlatform,
+        multiTurn,
+      },
     });
     if (response.success && 'data' in response) {
       const data = (response as CompileSuccessResponse).data;
@@ -225,7 +270,8 @@ function renderMetadata(data: CompiledPrompt): void {
   metaDomain.textContent = data.metadata.domain;
   const levelText = data.metadata.effective_level ? ` • ${data.metadata.effective_level.toUpperCase()}` : '';
   metaComplexity.textContent = `${data.metadata.complexity}${levelText}`;
-  metaTime.textContent = `${data.metadata.processing_time_ms}ms`;
+  const tokensText = data.metadata.estimated_tokens ? ` • ~${data.metadata.estimated_tokens} tokens` : '';
+  metaTime.textContent = `${data.metadata.processing_time_ms}ms${tokensText}`;
 }
 
 function renderQualityRing(data: CompiledPrompt): void {
@@ -298,6 +344,17 @@ async function handleInsert(): Promise<void> {
       },
       args: [text],
     });
+    if (insertBtn) {
+      const origText = insertBtn.textContent;
+      insertBtn.textContent = '✓ Inserted!';
+      insertBtn.style.background = '#16a34a';
+      setTimeout(() => {
+        if (insertBtn) {
+          insertBtn.textContent = origText;
+          insertBtn.style.background = '';
+        }
+      }, 1800);
+    }
     showToast('Inserted!');
   } catch { showToast('Could not insert'); }
 }

@@ -67,3 +67,17 @@ export function truncateInput(text: string, maxLength: number): { text: string; 
   }
   return { text: text.slice(0, maxLength), truncated: true };
 }
+
+/**
+ * Fast, accurate token count estimation (~4 characters per token heuristic
+ * with special punctuation weighting)
+ */
+export function estimateTokenCount(text: string): number {
+  if (!text) return 0;
+  // Standard GPT/Claude tokenization ratio averages ~4 chars per token,
+  // whitespace/punctuation creates slight overhead
+  const words = text.trim().split(/\s+/).length;
+  const chars = text.length;
+  // Blend char-based and word-based heuristics
+  return Math.max(1, Math.round((chars / 4.0 + words * 1.3) / 2));
+}

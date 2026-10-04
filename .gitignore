@@ -1,43 +1,78 @@
-# Dependencies
-node_modules/
+# ============================================================================
+# Prompt Compiler — .gitignore
+# ============================================================================
 
-# Build output
+# ---------------------------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------------------------
+node_modules/
+.pnpm-store/
+
+# ---------------------------------------------------------------------------
+# Build & Compiler Artifacts
+# dist/        → esbuild output (regenerated via `npm run build:ext`)
+# dist.zip     → kept tracked on purpose for direct raw download (see below)
+# ---------------------------------------------------------------------------
 dist/
 *.tsbuildinfo
+*.log
 
-# Release artifacts
-dist-*.zip
-extension.tar
+# ---------------------------------------------------------------------------
+# Release Archives
+# dist.zip is committed to `main` so users can download it directly via
+# raw.githubusercontent.com. Every other archive is a local/CI build artifact.
+# ---------------------------------------------------------------------------
+*.zip
+*.tar
+*.tar.gz
+!dist.zip
 
-# Coverage reports
+# ---------------------------------------------------------------------------
+# Test & Coverage Reports
+# ---------------------------------------------------------------------------
 coverage/
+.nyc_output/
 
-# Temporary and debug outputs
+# ---------------------------------------------------------------------------
+# Temporary, Debug & Scratch Files
+# ---------------------------------------------------------------------------
+*.tmp
 test-*.txt
 test_output.txt
 popup-test.txt
 persona-fail.txt
-
-# Generated inventory/helper files
-file-inventory.txt
-file-inventory-project.txt
+file-inventory*.txt
 file-not-important-docs.txt
-
-# Non-important archive bundles
+# Manual one-off smoke script (not wired into any npm script / CI)
+test-3-prompts.ts
 _not_important_bundle/
-archive/non_important/
+archive/
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Environment files
+# ---------------------------------------------------------------------------
+# Environment Variables & Secrets
+# ---------------------------------------------------------------------------
 .env
 .env.*
 !.env.example
 
-# OS files
+# ---------------------------------------------------------------------------
+# Operating System & IDE
+# ---------------------------------------------------------------------------
 .DS_Store
 Thumbs.db
-detail analysis of v2.0.0.pdf
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---------------------------------------------------------------------------
+# Agent / Workflow Artifacts (Kiro)
+# ---------------------------------------------------------------------------
+.agents/
+.worktrees/
+
+# ---------------------------------------------------------------------------
+# Analysis / Raw PDFs (kept out of the repo)
+# ---------------------------------------------------------------------------
+*.pdf

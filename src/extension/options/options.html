@@ -100,28 +100,58 @@
 
       <!-- ── AI Enhancement ── -->
       <hr>
-      <h2>🤖 AI Enhancement (Groq)</h2>
+      <h2>🤖 AI Enhancement</h2>
 
       <div class="field field-inline">
         <label for="llm-enabled">Enable LLM-Enhanced Compilation</label>
         <input type="checkbox" id="llm-enabled">
       </div>
 
-      <div class="field" id="llm-settings-group">
+      <!-- LLM Provider Selector -->
+      <div class="field" id="llm-provider-group">
+        <label for="llm-provider">LLM Provider</label>
+        <select id="llm-provider">
+          <option value="groq">Groq (Ultra-fast Llama 3.3)</option>
+          <option value="gemini">Google Gemini (Gemini 1.5 Flash / Pro)</option>
+          <option value="openai">OpenAI (GPT-4o Mini / GPT-4o)</option>
+        </select>
+      </div>
+
+      <!-- Groq Key -->
+      <div class="field llm-key-field" id="groq-key-group">
         <label for="groq-api-key">Groq API Key</label>
         <div style="display:flex;gap:8px;align-items:center">
           <input type="password" id="groq-api-key" placeholder="gsk_..." style="flex:1">
-          <button type="button" id="toggle-key-visibility" style="white-space:nowrap">Show</button>
+          <button type="button" class="toggle-key-visibility" data-target="groq-api-key" style="white-space:nowrap">Show</button>
         </div>
         <small>Get a free key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a></small>
+      </div>
+
+      <!-- Gemini Key -->
+      <div class="field llm-key-field" id="gemini-key-group" style="display:none">
+        <label for="gemini-api-key">Google Gemini API Key</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="password" id="gemini-api-key" placeholder="AIzaSy..." style="flex:1">
+          <button type="button" class="toggle-key-visibility" data-target="gemini-api-key" style="white-space:nowrap">Show</button>
+        </div>
+        <small>Get a key at <a href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com</a></small>
+      </div>
+
+      <!-- OpenAI Key -->
+      <div class="field llm-key-field" id="openai-key-group" style="display:none">
+        <label for="openai-api-key">OpenAI API Key</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="password" id="openai-api-key" placeholder="sk-..." style="flex:1">
+          <button type="button" class="toggle-key-visibility" data-target="openai-api-key" style="white-space:nowrap">Show</button>
+        </div>
+        <small>Get a key at <a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a></small>
       </div>
 
       <div class="field" id="llm-model-group">
         <label for="llm-model">Model</label>
         <select id="llm-model">
+          <!-- Populated dynamically based on selected provider -->
           <option value="llama-3.3-70b-versatile">Llama 3.3 70B (recommended)</option>
-          <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant (faster)</option>
-          <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
         </select>
       </div>
 

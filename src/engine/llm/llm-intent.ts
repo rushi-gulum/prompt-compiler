@@ -1,6 +1,6 @@
 import type { LLMConfig, LLMIntentResult, TaskType, DomainType, Complexity } from '../types.js';
 import { ALL_TASK_TYPES, ALL_DOMAIN_TYPES } from '../types.js';
-import { callGroq, buildClientOptions, type GroqMessage } from './groq-client.js';
+import { callUnifiedLLM, buildUnifiedClientOptions, type UnifiedMessage } from './unified-client.js';
 
 const SYSTEM_PROMPT = `You are an expert prompt analysis engine. Given a user's raw prompt idea, analyze it and return a JSON object with these exact fields:
 
@@ -23,7 +23,7 @@ Rules:
 - Return ONLY valid JSON. No markdown, no explanation.`;
 
 /**
- * Use the Groq LLM to analyze user intent from raw prompt text.
+ * Use LLM (Groq, Gemini, or OpenAI) to analyze user intent from raw prompt text.
  * Returns null if the call fails (allows graceful fallback).
  */
 export async function analyzeLLMIntent(
@@ -34,15 +34,15 @@ export async function analyzeLLMIntent(
     return null;
   }
 
-  const options = buildClientOptions(config);
-  const messages: GroqMessage[] = [
+  const options = buildUnifiedClientOptions(config);
+  const messages: UnifiedMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT },
     { role: 'user', content: rawInput },
   ];
 
   try {
-    const response = await callGroq(messages, options, true);
-    const content = response.choices?.[0]?.message?.content;
+    const response = await callUnifiedLLM(messages, options, true);
+    const content = response.content;
     if (!content) return null;
 
     const parsed = JSON.parse(content);

@@ -148,4 +148,75 @@ Confidence: 0.92`,
 | Free Tier | 12 months | 12 months | Always Free + 90-day |`,
     },
   ],
+
+  debugging: [
+    {
+      description: 'Root cause analysis and fix',
+      input: 'Fix "TypeError: Cannot read properties of undefined (reading map)" in React component',
+      output: `// Cause: The data prop is initially undefined while the fetch request is in flight.
+// Solution: Provide a fallback empty array or optional chaining with guard clause.
+
+export function ItemList({ items }: { items?: string[] }) {
+  if (!items || items.length === 0) {
+    return <p>No items found.</p>;
+  }
+
+  return (
+    <ul>
+      {items.map((item, idx) => (
+        <li key={idx}>{item}</li>
+      ))}
+    </ul>
+  );
+}`,
+    },
+  ],
+
+  sql_generation: [
+    {
+      description: 'Optimized SQL query with joins and window function',
+      input: 'Find top 3 customers by revenue per region for year 2024',
+      output: `WITH RankedCustomers AS (
+  SELECT
+    c.region,
+    c.customer_id,
+    c.customer_name,
+    SUM(o.total_amount) AS total_revenue,
+    DENSE_RANK() OVER (PARTITION BY c.region ORDER BY SUM(o.total_amount) DESC) AS rank_in_region
+  FROM customers c
+  JOIN orders o ON c.customer_id = o.customer_id
+  WHERE o.order_date >= '2024-01-01' AND o.order_date < '2025-01-01'
+  GROUP BY c.region, c.customer_id, c.customer_name
+)
+SELECT region, rank_in_region, customer_id, customer_name, total_revenue
+FROM RankedCustomers
+WHERE rank_in_region <= 3
+ORDER BY region, rank_in_region;`,
+    },
+  ],
+
+  summarization: [
+    {
+      description: 'Executive TL;DR with key takeaways',
+      input: 'Summarize quarterly engineering roadmap updates',
+      output: `### Executive Summary
+Engineering delivered 88% of planned Q3 deliverables with major infrastructure reliability wins.
+
+**Key Highlights:**
+- **Zero-Downtime Migration:** Completed core database migration to Aurora PostgreSQL.
+- **Latency Reduction:** 95th percentile API response times decreased by 42ms.
+- **Q4 Priorities:** Focus shifts to SOC-2 Type II audit readiness and self-serve onboarding.`,
+    },
+  ],
+
+  data_analysis: [
+    {
+      description: 'Statistical summary and business insights',
+      input: 'Analyze month-over-month churn rate metrics',
+      output: `### Churn Rate Analysis
+- **Current MoM Churn:** 2.4% (vs. 2.1% prior month, +14.3% relative increase)
+- **Primary Driver:** 68% of churned accounts were on the self-serve Basic Tier who experienced onboarding friction within the first 14 days.
+- **Recommendation:** Implement automated milestone emails and in-app activation guides at Day 3 and Day 7.`,
+    },
+  ],
 };

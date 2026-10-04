@@ -43,6 +43,7 @@ export interface CompileRequest {
     rawIdea: string;
     compilationLevel?: CompilationLevel;
     targetPlatform?: TargetPlatform;
+    multiTurn?: import('../../engine/types.js').MultiTurnContext;
   };
 }
 
@@ -175,7 +176,10 @@ export interface UserSettings {
   onboardingComplete: boolean;
   enableContextMenu: boolean;
   enableSidePanel: boolean;
+  llmProvider: import('../../engine/types.js').LLMProvider;
   groqApiKey: string;
+  geminiApiKey: string;
+  openaiApiKey: string;
   llmEnabled: boolean;
   llmModel: string;
   compileTimeoutMs: number;

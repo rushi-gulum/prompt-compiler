@@ -5,6 +5,7 @@ import { ALL_PROMPT_SECTIONS } from '../types.js';
 import { buildPromptSections, domainConstraints, instructionTemplates } from '../data/templates.js';
 import { scorePrompt } from '../scoring/quality-scorer.js';
 import { exampleLibrary } from '../data/examples.js';
+import { estimateTokenCount } from '../utils/text-utils.js';
 
 /** Stage 6: Synthesize all stage outputs into the final compiled prompt */
 export function synthesizePrompt(ctx: PipelineContext): CompiledPrompt {
@@ -157,10 +158,12 @@ export function synthesizePrompt(ctx: PipelineContext): CompiledPrompt {
       compilation_level: requestedLevel,
       effective_level: effectiveLevel,
       target_platform: platform,
+      estimated_tokens: estimateTokenCount(prompt),
       processing_time_ms: Date.now() - startTime,
       warnings,
       enhanced,
       hybrid_mode: false,
+      multi_turn: !!ctx.multi_turn?.previousTurn,
     },
   };
 }

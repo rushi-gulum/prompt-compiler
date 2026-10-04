@@ -40,6 +40,7 @@ describe('E2E Compilation Flow', () => {
       rawIdea: 'Write a python script to process CSV files and summarize the data',
       audienceLevel: 'professional',
       preferredDomain: null,
+      compilationLevel: 'deep' as const,
     };
 
     // Spy on the global fetch to ensure it doesn't get called (offline mode)

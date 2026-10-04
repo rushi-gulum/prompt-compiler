@@ -4,7 +4,7 @@ import { domainBasePersonas, taskModifiers, generalistPersona } from '../data/pe
 let cachedLibrary: Partial<Record<DomainType, Partial<Record<TaskType, PersonaResult>>>> | null = null;
 
 async function getLibrary(): Promise<Partial<Record<DomainType, Partial<Record<TaskType, PersonaResult>>>>> {
-  if (cachedLibrary) return cachedLibrary;
+  if (cachedLibrary && Object.keys(cachedLibrary).length > 0) return cachedLibrary;
 
   try {
     if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
@@ -21,9 +21,14 @@ async function getLibrary(): Promise<Partial<Record<DomainType, Partial<Record<T
       const data = fs.readFileSync(path.resolve(process.cwd(), 'src/engine/data/personas.json'), 'utf-8');
       cachedLibrary = JSON.parse(data);
     }
-  } catch (error) {
-    console.error('Failed to load persona library:', error);
-    cachedLibrary = {}; // Fallback empty
+  } catch {
+    // Dynamic import fallback to bundled personaLibrary if filesystem or extension asset fetch is unavailable
+    try {
+      const mod = await import('../data/personas.js');
+      cachedLibrary = mod.personaLibrary;
+    } catch {
+      cachedLibrary = {};
+    }
   }
   return cachedLibrary!;
 }

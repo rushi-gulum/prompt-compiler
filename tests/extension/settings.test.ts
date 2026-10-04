@@ -17,6 +17,9 @@ describe('Settings Module', () => {
     expect(DEFAULT_SETTINGS.theme).toBe('system');
     expect(DEFAULT_SETTINGS.enableContentScript).toBe(true);
     expect(DEFAULT_SETTINGS.keyboardShortcut).toBe('Ctrl+Shift+P');
+    expect(DEFAULT_SETTINGS.llmProvider).toBe('groq');
+    expect(DEFAULT_SETTINGS.geminiApiKey).toBe('');
+    expect(DEFAULT_SETTINGS.openaiApiKey).toBe('');
   });
 
   test('getSettings returns defaults when storage is empty', async () => {

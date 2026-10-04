@@ -10,7 +10,10 @@ export const DEFAULT_SETTINGS: UserSettings = {
   onboardingComplete: false,
   enableContextMenu: true,
   enableSidePanel: false,
+  llmProvider: 'groq',
   groqApiKey: '',
+  geminiApiKey: '',
+  openaiApiKey: '',
   llmEnabled: false,
   llmModel: 'llama-3.3-70b-versatile',
   compileTimeoutMs: 10000,
@@ -20,6 +23,8 @@ const STORAGE_KEY = 'prompt_compiler_settings';
 const HISTORY_KEY = 'prompt_compiler_history';
 const FEEDBACK_KEY = 'prompt_compiler_feedback';
 const SECURE_KEY_STORAGE = 'prompt_compiler_secure_key';
+const SECURE_GEMINI_KEY_STORAGE = 'prompt_compiler_secure_gemini_key';
+const SECURE_OPENAI_KEY_STORAGE = 'prompt_compiler_secure_openai_key';
 const MAX_HISTORY = 200;
 
 // ─── Settings ────────────────────────────────────────────────────────────────
@@ -30,73 +35,77 @@ export async function getSettings(): Promise<UserSettings> {
     ? { ...DEFAULT_SETTINGS, ...result[STORAGE_KEY] }
     : { ...DEFAULT_SETTINGS };
 
-  // Migrate API key from local to session storage if present
-  if (settings.groqApiKey) {
-    await setSecureKey(settings.groqApiKey);
-    settings.groqApiKey = '';
-    await chrome.storage.local.set({ [STORAGE_KEY]: settings });
-  }
-
-  // Read API key from session storage
-  settings.groqApiKey = await getSecureKey();
+  // Read API keys securely
+  settings.groqApiKey = await getSecureKey(SECURE_KEY_STORAGE);
+  settings.geminiApiKey = await getSecureKey(SECURE_GEMINI_KEY_STORAGE);
+  settings.openaiApiKey = await getSecureKey(SECURE_OPENAI_KEY_STORAGE);
   return settings;
 }
 
 export async function updateSettings(partial: Partial<UserSettings>): Promise<void> {
-  // Handle API key separately — store in session storage
-  if (partial.groqApiKey !== undefined) {
-    await setSecureKey(partial.groqApiKey);
-    partial = { ...partial, groqApiKey: '' }; // Don't persist key in local storage
+  const cleanPartial = { ...partial };
+
+  // Handle API keys separately — store in session/secure storage
+  if (cleanPartial.groqApiKey !== undefined) {
+    await setSecureKey(SECURE_KEY_STORAGE, cleanPartial.groqApiKey);
+    cleanPartial.groqApiKey = '';
+  }
+  if (cleanPartial.geminiApiKey !== undefined) {
+    await setSecureKey(SECURE_GEMINI_KEY_STORAGE, cleanPartial.geminiApiKey);
+    cleanPartial.geminiApiKey = '';
+  }
+  if (cleanPartial.openaiApiKey !== undefined) {
+    await setSecureKey(SECURE_OPENAI_KEY_STORAGE, cleanPartial.openaiApiKey);
+    cleanPartial.openaiApiKey = '';
   }
 
   const current = await chrome.storage.local.get(STORAGE_KEY);
   const existing = current[STORAGE_KEY] ?? DEFAULT_SETTINGS;
-  const updated = { ...existing, ...partial };
+  const updated = { ...existing, ...cleanPartial };
   await chrome.storage.local.set({ [STORAGE_KEY]: updated });
 }
 
 export async function initDefaults(): Promise<void> {
   const result = await chrome.storage.local.get(STORAGE_KEY);
   if (!result[STORAGE_KEY]) {
-    await chrome.storage.local.set({ [STORAGE_KEY]: { ...DEFAULT_SETTINGS, groqApiKey: '' } });
+    await chrome.storage.local.set({ [STORAGE_KEY]: { ...DEFAULT_SETTINGS } });
   }
 }
 
 export async function resetToDefaults(): Promise<void> {
-  await chrome.storage.local.set({ [STORAGE_KEY]: { ...DEFAULT_SETTINGS, groqApiKey: '' } });
-  await setSecureKey('');
+  await chrome.storage.local.set({ [STORAGE_KEY]: { ...DEFAULT_SETTINGS } });
+  await setSecureKey(SECURE_KEY_STORAGE, '');
+  await setSecureKey(SECURE_GEMINI_KEY_STORAGE, '');
+  await setSecureKey(SECURE_OPENAI_KEY_STORAGE, '');
 }
 
 // ─── Secure Key Storage (session-scoped, encrypted) ─────────────────────────
 
 /** Store API key in chrome.storage.session (encrypted, session-scoped) */
-async function setSecureKey(key: string): Promise<void> {
+async function setSecureKey(storageKey: string, key: string): Promise<void> {
   try {
-    if (chrome.storage.session) {
-      await chrome.storage.session.set({ [SECURE_KEY_STORAGE]: key });
+    if (chrome.storage?.session) {
+      await chrome.storage.session.set({ [storageKey]: key });
     } else {
-      // Fallback for environments without session storage (e.g., tests)
-      await chrome.storage.local.set({ [SECURE_KEY_STORAGE]: key });
+      await chrome.storage.local.set({ [storageKey]: key });
     }
   } catch {
-    // Fallback to local storage if session storage fails
-    await chrome.storage.local.set({ [SECURE_KEY_STORAGE]: key });
+    await chrome.storage.local.set({ [storageKey]: key });
   }
 }
 
 /** Read API key from chrome.storage.session */
-async function getSecureKey(): Promise<string> {
+async function getSecureKey(storageKey: string): Promise<string> {
   try {
-    if (chrome.storage.session) {
-      const result = await chrome.storage.session.get(SECURE_KEY_STORAGE);
-      if (result[SECURE_KEY_STORAGE]) return result[SECURE_KEY_STORAGE];
+    if (chrome.storage?.session) {
+      const result = await chrome.storage.session.get(storageKey);
+      if (result[storageKey]) return result[storageKey];
     }
   } catch {
     // Fall through to local storage
   }
-  // Fallback: check local storage
-  const result = await chrome.storage.local.get(SECURE_KEY_STORAGE);
-  return result[SECURE_KEY_STORAGE] ?? '';
+  const result = await chrome.storage.local.get(storageKey);
+  return result[storageKey] ?? '';
 }
 
 // ─── History ─────────────────────────────────────────────────────────────────
@@ -176,6 +185,49 @@ export async function getFeedback(historyId: string): Promise<FeedbackEntry | nu
   const result = await chrome.storage.local.get(FEEDBACK_KEY);
   const feedback: FeedbackEntry[] = result[FEEDBACK_KEY] ?? [];
   return feedback.find(f => f.historyId === historyId) ?? null;
+}
+
+export interface FeedbackStats {
+  totalRatings: number;
+  positiveRatings: number;
+  negativeRatings: number;
+  satisfactionRate: number; // 0 to 1
+  taskPerformance: Record<string, { positive: number; total: number }>;
+}
+
+/** Aggregate ratings by task type to close the feedback loop */
+export async function getFeedbackStats(): Promise<FeedbackStats> {
+  const result = await chrome.storage.local.get([FEEDBACK_KEY, HISTORY_KEY]);
+  const feedback: FeedbackEntry[] = result[FEEDBACK_KEY] ?? [];
+  const history: HistoryEntry[] = result[HISTORY_KEY] ?? [];
+
+  const historyMap = new Map(history.map(h => [h.id, h]));
+  let positive = 0;
+  const taskPerformance: Record<string, { positive: number; total: number }> = {};
+
+  for (const f of feedback) {
+    if (f.isPositive) positive++;
+    const h = historyMap.get(f.historyId);
+    if (h) {
+      const task = h.result.metadata.task_type;
+      if (!taskPerformance[task]) {
+        taskPerformance[task] = { positive: 0, total: 0 };
+      }
+      taskPerformance[task].total++;
+      if (f.isPositive) {
+        taskPerformance[task].positive++;
+      }
+    }
+  }
+
+  const total = feedback.length;
+  return {
+    totalRatings: total,
+    positiveRatings: positive,
+    negativeRatings: total - positive,
+    satisfactionRate: total > 0 ? positive / total : 1.0,
+    taskPerformance,
+  };
 }
 
 // ─── Import / Export ─────────────────────────────────────────────────────────

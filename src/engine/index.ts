@@ -10,6 +10,7 @@ import { refineOutput } from './llm/llm-refiner.js';
 export interface CompileOptions {
   level?: import('./types.js').CompilationLevel;
   targetPlatform?: import('./types.js').TargetPlatform;
+  multiTurn?: import('./types.js').MultiTurnContext;
 }
 
 /** Public API: compile a raw idea string into an expert-level prompt.
@@ -46,6 +47,7 @@ export async function compile(
   const isHybrid = !!(llmConfig && llmConfig.enabled && llmConfig.apiKey);
   const compilationLevel = options?.level ?? 'auto';
   const targetPlatform = options?.targetPlatform ?? 'generic';
+  const multiTurn = options?.multiTurn;
 
   try {
     let ctx;
@@ -60,6 +62,7 @@ export async function compile(
       ctx = await runPipeline(text, {
         compilation_level: compilationLevel,
         target_platform: targetPlatform,
+        multi_turn: multiTurn,
         intent,
         domain,
         llmIntent,
@@ -97,6 +100,7 @@ export async function compile(
       ctx = await runPipeline(text, {
         compilation_level: compilationLevel,
         target_platform: targetPlatform,
+        multi_turn: multiTurn,
       });
     }
 
@@ -123,6 +127,8 @@ export type {
   CompilationError,
   CompilationLevel,
   TargetPlatform,
+  MultiTurnContext,
+  LLMProvider,
   TaskType,
   DomainType,
   OutputFormat,

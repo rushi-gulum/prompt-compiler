@@ -58,6 +58,7 @@ mkdirSync('dist/popup', { recursive: true });
 mkdirSync('dist/options', { recursive: true });
 mkdirSync('dist/sidepanel', { recursive: true });
 mkdirSync('dist/icons', { recursive: true });
+mkdirSync('dist/data', { recursive: true });
 
 copyFileSync('src/extension/manifest.json', 'dist/manifest.json');
 copyFileSync('src/extension/popup/popup.html', 'dist/popup/popup.html');
@@ -65,6 +66,10 @@ copyFileSync('src/extension/popup/popup.css', 'dist/popup/popup.css');
 copyFileSync('src/extension/options/options.html', 'dist/options/options.html');
 copyFileSync('src/extension/options/options.css', 'dist/options/options.css');
 copyFileSync('src/extension/sidepanel/sidepanel.html', 'dist/sidepanel/sidepanel.html');
+
+if (existsSync('src/engine/data/personas.json')) {
+  copyFileSync('src/engine/data/personas.json', 'dist/data/personas.json');
+}
 
 if (existsSync('src/extension/icons')) {
   cpSync('src/extension/icons', 'dist/icons', { recursive: true });

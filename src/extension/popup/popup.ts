@@ -140,9 +140,10 @@ async function init(): Promise<void> {
 
   attachListeners();
 
-  // Check offline status and update banner
+  // Check offline status, update banner, and detect target platform for insert button
   checkOfflineStatus();
   checkUpdateBanner();
+  void updateInsertButtonLabel();
 }
 
 function updateLevelPillsUI(): void {
@@ -306,6 +307,21 @@ async function detectActiveTabPlatform(): Promise<import('../../engine/types.js'
   }
 }
 
+async function updateInsertButtonLabel(): Promise<void> {
+  const platform = await detectActiveTabPlatform();
+  const labels: Record<string, string> = {
+    chatgpt: '⚡ Insert into ChatGPT',
+    claude: '⚡ Insert into Claude',
+    gemini: '⚡ Insert into Gemini',
+    perplexity: '⚡ Insert into Perplexity',
+    grok: '⚡ Insert into Grok',
+    generic: '⚡ Insert into Page',
+  };
+  if (insertBtn) {
+    insertBtn.textContent = labels[platform] || '⚡ Insert into Page';
+  }
+}
+
 // ─── Compile ────────────────────────────────────────────────────────────
 async function handleCompile(): Promise<void> {
   const rawIdea = inputArea.value.trim();
@@ -320,12 +336,20 @@ async function handleCompile(): Promise<void> {
 
   try {
     const targetPlatform = await detectActiveTabPlatform();
+    const multiTurn = state.currentResult && state.lastInput ? {
+      previousTurn: {
+        input: state.lastInput,
+        output: state.currentResult.assembled_prompt,
+      },
+    } : undefined;
+
     const response: ExtensionResponse = await chrome.runtime.sendMessage({
       action: 'compile',
       payload: {
         rawIdea,
         compilationLevel: state.compilationLevel,
         targetPlatform,
+        multiTurn,
       },
     });
 
@@ -408,7 +432,8 @@ function renderMetadata(data: CompiledPrompt): void {
   metaDomain.textContent = data.metadata.domain;
   const levelText = data.metadata.effective_level ? ` • ${data.metadata.effective_level.toUpperCase()}` : '';
   metaComplexity.textContent = `${data.metadata.complexity}${levelText}`;
-  metaTime.textContent = `${data.metadata.processing_time_ms}ms`;
+  const tokensText = data.metadata.estimated_tokens ? ` • ~${data.metadata.estimated_tokens} tokens` : '';
+  metaTime.textContent = `${data.metadata.processing_time_ms}ms${tokensText}`;
 }
 
 // ─── Quality Ring ───────────────────────────────────────────────────────
@@ -533,6 +558,17 @@ async function handleInsert(): Promise<void> {
       },
       args: [text],
     });
+    if (insertBtn) {
+      const origText = insertBtn.textContent;
+      insertBtn.textContent = '✓ Inserted!';
+      insertBtn.style.background = '#16a34a';
+      setTimeout(() => {
+        if (insertBtn) {
+          insertBtn.textContent = origText;
+          insertBtn.style.background = '';
+        }
+      }, 1800);
+    }
     showToast('Inserted into page!');
   } catch {
     showToast('Could not insert — is the page an AI chat?');

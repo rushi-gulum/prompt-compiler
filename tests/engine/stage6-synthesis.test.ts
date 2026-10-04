@@ -228,4 +228,73 @@ describe('Stage 6 — Prompt Synthesis', () => {
       expect(result.prompt).not.toContain('<role>');
     });
   });
+
+  describe('Model-Specific Platform Optimization', () => {
+    test('target_platform: chatgpt uses markdown headers instead of XML tags', () => {
+      const ctx = makeFullCtx({
+        compilation_level: 'deep',
+        target_platform: 'chatgpt',
+      });
+      const result = synthesizePrompt(ctx);
+      expect(result.metadata.target_platform).toBe('chatgpt');
+      expect(result.prompt).toContain('# Role & Persona');
+      expect(result.prompt).toContain('# Objective');
+      expect(result.prompt).not.toContain('<role>');
+      expect(result.prompt).not.toContain('</role>');
+    });
+
+    test('target_platform: claude uses native XML section delimiters', () => {
+      const ctx = makeFullCtx({
+        compilation_level: 'deep',
+        target_platform: 'claude',
+      });
+      const result = synthesizePrompt(ctx);
+      expect(result.metadata.target_platform).toBe('claude');
+      expect(result.prompt).toContain('<role>');
+      expect(result.prompt).toContain('</role>');
+      expect(result.prompt).toContain('<quality_standard>');
+    });
+
+    test('target_platform: gemini uses clear natural sectioning', () => {
+      const ctx = makeFullCtx({
+        compilation_level: 'deep',
+        target_platform: 'gemini',
+      });
+      const result = synthesizePrompt(ctx);
+      expect(result.metadata.target_platform).toBe('gemini');
+      expect(result.prompt).toContain('## Role');
+      expect(result.prompt).toContain('## Task');
+      expect(result.prompt).not.toContain('<role>');
+    });
+
+    test('target_platform: perplexity uses concise formatting', () => {
+      const ctx = makeFullCtx({
+        compilation_level: 'deep',
+        target_platform: 'perplexity',
+      });
+      const result = synthesizePrompt(ctx);
+      expect(result.metadata.target_platform).toBe('perplexity');
+      expect(result.prompt).toContain('### Rules');
+      expect(result.prompt).not.toContain('<role>');
+    });
+  });
+
+  describe('Multi-Turn Context Awareness', () => {
+    test('synthesizePrompt integrates previous turn context seamlessly', () => {
+      const ctx = makeFullCtx({
+        compilation_level: 'standard',
+        multi_turn: {
+          previousTurn: {
+            input: 'Create an Express user login endpoint',
+            output: 'Here is the app.post("/login") route with bcrypt...',
+          },
+        },
+      });
+      const result = synthesizePrompt(ctx);
+      expect(result.metadata.multi_turn).toBe(true);
+      expect(result.sections.context).toContain('Prior Conversation Context');
+      expect(result.sections.context).toContain('Create an Express user login endpoint');
+      expect(result.sections.context).toContain('Build upon and refine the prior response directly');
+    });
+  });
 });

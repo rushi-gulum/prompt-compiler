@@ -916,9 +916,21 @@ export function buildBehavioralRulesSection(domain: DomainType, task_type: TaskT
   return `## Behavioral Rules\n\n### DO:\n${positiveRules}\n\n### DO NOT:\n${negativeRules}`;
 }
 
-export function buildContextSection(intent: IntentResult, structure: StructureResult): string {
+export function buildContextSection(
+  intent: IntentResult,
+  structure: StructureResult,
+  multiTurn?: import('../types.js').MultiTurnContext,
+): string {
   const entities = intent.key_entities.length > 0 ? `Key topics: ${intent.key_entities.join(', ')}.` : '';
-  return `Audience level: ${structure.audience_level}.\n${entities}\nComplexity: ${intent.complexity}. Adjust depth and terminology accordingly.`;
+  let ctxStr = `Audience level: ${structure.audience_level}.\n${entities}\nComplexity: ${intent.complexity}. Adjust depth and terminology accordingly.`;
+
+  if (multiTurn?.previousTurn) {
+    const prevIn = multiTurn.previousTurn.input.trim();
+    const prevOut = multiTurn.previousTurn.output.trim().slice(0, 300);
+    ctxStr += `\n\n### Prior Conversation Context:\n- Previous user request: "${prevIn}"\n- Prior assistant outcome: "${prevOut}..."\nBuild upon and refine the prior response directly without redundant recap.`;
+  }
+
+  return ctxStr;
 }
 
 export function buildReasoningSection(reasoning: ReasoningResult): string {
@@ -987,7 +999,7 @@ export function buildPromptSections(ctx: PipelineContext): Record<PromptSection,
     role: buildRoleSection(persona),
     mission: buildMissionSection(intent, domain),
     behavioral_rules: buildBehavioralRulesSection(domain.primary_domain, intent.task_type),
-    context: buildContextSection(intent, structure),
+    context: buildContextSection(intent, structure, ctx.multi_turn),
     reasoning: buildReasoningSection(reasoning),
     instructions: buildInstructionsSection(structure),
     output_format: buildOutputFormatSection(structure),

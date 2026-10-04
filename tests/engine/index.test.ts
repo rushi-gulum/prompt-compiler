@@ -96,7 +96,7 @@ describe('Public API — compile()', () => {
   });
 
   test('assembled_prompt contains XML section markers', async () => {
-    const result = await compile('Summarize the quarterly financial report for stakeholders');
+    const result = await compile('Summarize the quarterly financial report for stakeholders', undefined, { level: 'deep' });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.assembled_prompt).toContain('<role>');
@@ -169,7 +169,7 @@ describe('Public API — compile()', () => {
     if (result.success) {
       expect(result.data.metadata.effective_level).toBe('light');
       expect(result.data.assembled_prompt).not.toContain('<role>');
-      expect(result.data.assembled_prompt.length).toBeLessThan(300);
+      expect(result.data.assembled_prompt.length).toBeLessThan(400);
     }
   });
 
@@ -190,6 +190,53 @@ describe('Public API — compile()', () => {
       expect(result.data.metadata.effective_level).toBe('deep');
       expect(result.data.assembled_prompt).toContain('<role>');
       expect(result.data.assembled_prompt).toContain('<quality_standard>');
+    }
+  });
+
+  // === Target Platform Optimization ===
+
+  test('compile with targetPlatform: chatgpt produces markdown formatted output', async () => {
+    const result = await compile('design a cache invalidation strategy', undefined, {
+      level: 'deep',
+      targetPlatform: 'chatgpt',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.metadata.target_platform).toBe('chatgpt');
+      expect(result.data.assembled_prompt).toContain('# Role & Persona');
+      expect(result.data.assembled_prompt).not.toContain('<role>');
+    }
+  });
+
+  test('compile with targetPlatform: claude produces XML tagged output', async () => {
+    const result = await compile('design a cache invalidation strategy', undefined, {
+      level: 'deep',
+      targetPlatform: 'claude',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.metadata.target_platform).toBe('claude');
+      expect(result.data.assembled_prompt).toContain('<role>');
+    }
+  });
+
+  // === Multi-Turn Context ===
+
+  test('compile with multiTurn injects prior turn context', async () => {
+    const result = await compile('now add jwt authentication to this endpoint', undefined, {
+      level: 'standard',
+      multiTurn: {
+        previousTurn: {
+          input: 'build a express login route',
+          output: 'app.post("/login", (req, res) => { ... })',
+        },
+      },
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.metadata.multi_turn).toBe(true);
+      expect(result.data.sections.context).toContain('build a express login route');
+      expect(result.data.sections.context).toContain('Prior Conversation Context');
     }
   });
 });

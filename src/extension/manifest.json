@@ -3,10 +3,15 @@
   "name": "__MSG_extensionName__",
   "version": "2.0.0",
   "description": "__MSG_extensionDescription__",
+  "author": "Rushi Gulum",
   "default_locale": "en",
   "minimum_chrome_version": "114",
   "permissions": ["storage", "activeTab", "scripting", "contextMenus", "sidePanel"],
-  "host_permissions": ["https://api.groq.com/*"],
+  "host_permissions": [
+    "https://api.groq.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.openai.com/*"
+  ],
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
@@ -45,6 +50,12 @@
     "page": "options/options.html",
     "open_in_tab": true
   },
+  "web_accessible_resources": [
+    {
+      "resources": ["data/personas.json"],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'none';"
   },

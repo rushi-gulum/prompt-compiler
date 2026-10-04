@@ -83,7 +83,7 @@ chrome.runtime.onMessage.addListener(
 async function handleMessage(req: ExtensionRequest): Promise<ExtensionResponse> {
   switch (req.action) {
     case 'compile':
-      return handleCompile(req.payload.rawIdea, req.payload.compilationLevel, req.payload.targetPlatform);
+      return handleCompile(req.payload.rawIdea, req.payload.compilationLevel, req.payload.targetPlatform, req.payload.multiTurn);
 
     case 'get_settings':
       return { success: true, settings: await getSettings() };
@@ -124,17 +124,26 @@ async function handleMessage(req: ExtensionRequest): Promise<ExtensionResponse> 
 
     case 'test_groq_connection': {
       const settings = await getSettings();
-      if (!settings.groqApiKey) {
+      const provider = settings.llmProvider || 'groq';
+      const keyMap: Record<string, string> = {
+        groq: settings.groqApiKey,
+        gemini: settings.geminiApiKey,
+        openai: settings.openaiApiKey,
+      };
+      const apiKey = keyMap[provider] || settings.groqApiKey;
+
+      if (!apiKey) {
         return { success: true, connected: false } as ExtensionResponse;
       }
       try {
-        const { testConnection, buildClientOptions } = await import('../../engine/llm/groq-client.js');
-        const opts = buildClientOptions({
-          apiKey: settings.groqApiKey,
+        const { testUnifiedConnection, buildUnifiedClientOptions } = await import('../../engine/llm/unified-client.js');
+        const opts = buildUnifiedClientOptions({
+          provider,
+          apiKey,
           model: settings.llmModel,
           enabled: true,
         });
-        const connected = await testConnection(opts);
+        const connected = await testUnifiedConnection(opts);
         return { success: true, connected } as ExtensionResponse;
       } catch {
         return { success: true, connected: false } as ExtensionResponse;
@@ -171,6 +180,7 @@ async function handleCompile(
   rawIdea: string,
   requestedLevel?: import('../../engine/types.js').CompilationLevel,
   targetPlatform?: import('../../engine/types.js').TargetPlatform,
+  multiTurn?: import('../../engine/types.js').MultiTurnContext,
 ): Promise<ExtensionResponse> {
   // Rate limit check
   if (!(await canCompile())) {
@@ -191,17 +201,26 @@ async function handleCompile(
 
     // Build LLM config from user settings
     const settings = await getSettings();
+    const provider = settings.llmProvider || 'groq';
+    const keyMap: Record<string, string> = {
+      groq: settings.groqApiKey,
+      gemini: settings.geminiApiKey,
+      openai: settings.openaiApiKey,
+    };
+    const apiKey = keyMap[provider] || settings.groqApiKey;
+
     const llmConfig: LLMConfig = {
-      apiKey: settings.groqApiKey,
+      provider,
+      apiKey,
       model: settings.llmModel,
-      enabled: settings.llmEnabled,
+      enabled: settings.llmEnabled && !!apiKey,
     };
 
     timeoutMs = settings.compileTimeoutMs || 10000;
     const level = requestedLevel || settings.defaultCompilationLevel || 'auto';
 
     const result = await Promise.race([
-      compile(rawIdea, llmConfig, { level, targetPlatform }),
+      compile(rawIdea, llmConfig, { level, targetPlatform, multiTurn }),
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error('STAGE_TIMEOUT')), timeoutMs);
       }),

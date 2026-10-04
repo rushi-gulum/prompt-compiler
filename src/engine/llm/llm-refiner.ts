@@ -1,5 +1,5 @@
 import type { LLMConfig } from '../types.js';
-import { callGroq, buildClientOptions, type GroqMessage } from './groq-client.js';
+import { callUnifiedLLM, buildUnifiedClientOptions, type UnifiedMessage } from './unified-client.js';
 
 const REFINER_PROMPT = `You are an expert AI Prompt Engineer. Your task is to refine a generated prompt based on the provided critiques.
 Return the improved prompt strictly as raw text. Do NOT wrap it in markdown code blocks.
@@ -18,16 +18,16 @@ export async function refineOutput(
     return originalPrompt;
   }
 
-  const options = buildClientOptions({ ...config, model: config.model ?? 'llama-3.3-70b-versatile' });
-  const messages: GroqMessage[] = [
+  const options = buildUnifiedClientOptions(config);
+  const messages: UnifiedMessage[] = [
     { role: 'system', content: REFINER_PROMPT },
     { role: 'user', content: `Original Prompt:\n${originalPrompt}\n\nCritiques to Address:\n- ${critiques.join('\n- ')}\n\nPlease provide the complete revised prompt.` }
   ];
 
   try {
     // Note: jsonMode is false because we want raw text back
-    const response = await callGroq(messages, options, false);
-    const content = response.choices?.[0]?.message?.content;
+    const response = await callUnifiedLLM(messages, options, false);
+    const content = response.content;
     if (!content) return originalPrompt;
     
     // Attempt to strip basic markdown block wrappers if LLM still includes them
