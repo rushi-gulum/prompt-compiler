@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./Prompt.png" alt="Prompt Compiler Logo" width="180" />
+  <img src="./Prompt.png" alt="Prompt Compiler Logo" width="100" />
 </p>
 
 <h1 align="center">Prompt Compiler</h1>
